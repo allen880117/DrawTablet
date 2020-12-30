@@ -15,7 +15,9 @@ WINDOW_TITLE = 'Draw Tablet'
 CLR_WHITE = (255, 255, 255)
 CLR_BLACK = (0, 0, 0)
 
-alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+            'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
 
 class DrawTablet_WithDetection:
 
@@ -70,13 +72,19 @@ class DrawTablet_WithDetection:
             # Clear Pack
             pack = []
 
+            # 0
             # Add slope (Radius)
             dx = strobe[-1][0] - strobe[0][0]
             dy = strobe[-1][1] - strobe[0][1]
             # Get Radius # Don't use dy/dx, the accuracy will be very bad
             pack.append(math.atan2(dy, dx))
 
-            # Add strobe's length
+            # 1
+            # Add vector's length (shift length)
+            pack.append(math.sqrt(dx**2+dy**2))
+
+            # 2
+            # Add strobe's length (path length)
             length = 0
             last_point = -1
             for point in strobe:
@@ -88,6 +96,11 @@ class DrawTablet_WithDetection:
                     last_point = point
             pack.append(length)
 
+            # 3
+            # Add ratio between these two length
+            pack.append(length/math.sqrt(dx**2+dy**2))
+
+            # 4
             # Add offset from first strobe's start
             f_s_start = self.strobe_log[0][0]
             c_s_start = strobe[0]
@@ -96,18 +109,18 @@ class DrawTablet_WithDetection:
             pack.append(offset)
 
             # Add Total dy and dx compare to start of this strobe (for C, S, U ...)
-            c_s_start = strobe[0]
-            total_dy = 0
-            total_dx = 0
-            for point in strobe:
-                total_dx += abs(point[0] - c_s_start[0])
-                total_dy += abs(point[1] - c_s_start[1])
-            pack.append(total_dx)
-            pack.append(total_dy)
+            # c_s_start = strobe[0]
+            # total_dy = 0
+            # total_dx = 0
+            # for point in strobe:
+            #     total_dx += abs(point[0] - c_s_start[0])
+            #     total_dy += abs(point[1] - c_s_start[1])
+            # pack.append(total_dx)
+            # pack.append(total_dy)
 
             # Add number of sign change of x and y
-            c_sign_x = False # Init is negative
-            c_sign_y = False # Init is negative
+            c_sign_x = False  # Init is negative
+            c_sign_y = False  # Init is negative
             nx = 0
             ny = 0
             last_point = -1
@@ -119,10 +132,10 @@ class DrawTablet_WithDetection:
                     sign_y = (point[1] - last_point[1] > 0)
                     if (c_sign_x != sign_x):
                         c_sign_x = sign_x
-                        nx+=1
+                        nx += 1
                     if (c_sign_y != sign_y):
                         c_sign_y = sign_y
-                        ny+=1
+                        ny += 1
                     last_point = point
             pack.append(nx)
             pack.append(ny)
@@ -135,11 +148,11 @@ class DrawTablet_WithDetection:
         length_adj = 1/big_pack[0][1]
         for pack in big_pack:
             # pack[0] -= offset
-            pack[0] *= abs(pack[0])
-            pack[1] *= length_adj
-            pack[2] *= length_adj
-            pack[3] *= length_adj
-            pack[4] *= length_adj
+            pack[0] *= abs(pack[0])  # radius
+            pack[1] *= length_adj   # shift length
+            pack[2] *= length_adj   # path length
+            # pack[3] *= length_adj # ratio
+            pack[4] *= length_adj   # offset from strobe's length
 
         data = []
         for pack in big_pack:
@@ -175,8 +188,8 @@ class DrawTablet_WithDetection:
 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     pressing = False
-                
-            keys  = pygame.key.get_pressed()
+
+            keys = pygame.key.get_pressed()
             if keys[pygame.K_d]:
                 if (pressing == False):
                     ret = self.detection()
@@ -185,6 +198,8 @@ class DrawTablet_WithDetection:
 
             elif keys[pygame.K_c]:
                 self.background.fill(CLR_WHITE)
+                self.strobe_log = []
+                self.event_log = []
 
             # After Event Handle
             last_cursor_pos = cur_cursor_pos
@@ -216,6 +231,7 @@ class DrawTablet_WithDetection:
         # Draw Line
         pygame.draw.line(self.background, color, start, end, 1)
 
+
 if __name__ == "__main__":
-  dt = DrawTablet_WithDetection('strobe_classification.model')
-  dt.run()
+    dt = DrawTablet_WithDetection('strobe_classification.model')
+    dt.run()
