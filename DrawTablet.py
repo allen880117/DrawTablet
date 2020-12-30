@@ -20,9 +20,8 @@ class DrawTablet:
     event_log = []
     event_log_path = ''
 
-    def __init__(self, log_path):
-        self.game_initialize()
-        self.log_initialize(log_path)
+    def __init__(self):
+        pass
 
     def game_initialize(self):
         # Create Screen
@@ -65,7 +64,10 @@ class DrawTablet:
             self.log_dump()
             self.event_log = []
 
-    def run(self):
+    def run(self, log_path):
+        self.game_initialize()
+        self.log_initialize(log_path)
+
         running = True
         pressing = False
         last_cursor_pos = (0, 0)
